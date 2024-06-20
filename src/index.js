@@ -225,55 +225,47 @@ export default grapesjs.plugins.add('gjs-plugin-saver', (editor, opts = {}) => {
 
     async run() {
 
-        if (inProcess) return;
+      if (inProcess) return;
 
-        try {
-            inProcess = true;
+      try {
+        inProcess = true;
+        const currentPage = pageManager.getSelected();
+        const element2pdf = document.createElement("div");
 
-            const currentPage = pageManager.getSelected();
+        // Get an array of all pages
+        const allPages = pageManager.getAll();
+        for (const pageIndex in allPages) {
 
-            const element2pdf = document.createElement("div");
+            // or by passing the Page instance
+            pageManager.select(allPages[pageIndex]);
 
-            // Get an array of all pages
-            const allPages = pageManager.getAll();
+            await Delay(500);
+            const pageHtmlContent = document.createElement("div");
+            pageHtmlContent.innerHTML = document.getElementsByTagName("iframe")[0].contentDocument.body.innerHTML;
 
-            for (const pageIndex in allPages) {
-
-              // or by passing the Page instance
-              pageManager.select(allPages[pageIndex]);
-
-              await Delay(500);
-
-              const pageHtmlContent = document.createElement("div");
-
-              pageHtmlContent.innerHTML = document.getElementsByTagName("iframe")[0].contentDocument.body.innerHTML;
-
-              element2pdf.appendChild(pageHtmlContent);
-            }
-
-            pageManager.select(currentPage);
-
-            html2pdf().set({
-              margin: 0,
-              image: { type: 'jpeg', quality: 0.20 },
-              html2canvas: { scale: 2, useCORS: true },
-              jsPDF: { unit: 'in', format: 'a4', orientation: 'p' },
-            }).from(element2pdf).save('pages.pdf');
-
-            inProcess = false;
+            this.ConvertSVG2Image(pageHtmlContent); // Convert SVG and canvas to Image before appending
+            element2pdf.appendChild(pageHtmlContent);
         }
-        catch(error) {
 
-            inProcess = false;
-            console.log(error);
-        }
+        pageManager.select(currentPage);
+        html2pdf().set({
+          margin: 0,
+          image: { type: 'jpeg', quality: 0.20 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'in', format: 'a4', orientation: 'p' },
+        }).from(element2pdf).save('pages.pdf');
+
+        inProcess = false;
+      } catch (error) {
+        inProcess = false;
+        console.log(error);
+      }
+
     },
 
     ConvertSVG2Image(element) {
       const svgs = element.querySelectorAll("svg");
-  
-      let i;
-      for (i = 0; i < svgs.length; i++) {
+      for (let i = 0; i < svgs.length; i++) {
           const svgData = new XMLSerializer().serializeToString(svgs[i]);
           this.SVG2PNG(svgs[i], svgData, (svg, imgData) => {
               const pngImage = document.createElement('img');
@@ -285,6 +277,24 @@ export default grapesjs.plugins.add('gjs-plugin-saver', (editor, opts = {}) => {
               };
           });
       }
+
+      const canvases = element.querySelectorAll("canvas");
+      for (let i = 0; i < canvases.length; i++) {
+          this.Canvas2PNG(canvases[i], (canvas, imgData) => {
+              const pngImage = document.createElement('img');
+              pngImage.src = imgData;
+              pngImage.onload = () => {
+                  if (canvas && canvas.parentNode) {
+                      canvas.parentNode.replaceChild(pngImage, canvas);
+                  }
+              };
+          });
+      }
+    },
+
+    Canvas2PNG(canvas, callback) {
+        const imgData = canvas.toDataURL('image/png');
+        callback(canvas, imgData);
     },
     
     SVG2PNG(svg, svgData, callback) {
@@ -304,8 +314,10 @@ export default grapesjs.plugins.add('gjs-plugin-saver', (editor, opts = {}) => {
         };
     
         img.src = url;
-    },
+    }
+
   });
+
 
   // Start Exporter
 
@@ -497,5 +509,5 @@ ${editor.CodeManager.getCode(page.getMainComponent(), 'css')}
       }, delayTime);
     });
   }
-  
+
 });

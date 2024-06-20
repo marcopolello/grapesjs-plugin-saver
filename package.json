@@ -1,6 +1,6 @@
 {
   "name": "grapesjs-saver-fix",
-  "version": "1.0.4",
+  "version": "1.1.1",
   "description": "Replace the built-in RTE with CKEditor",
   "main": "dist/grapesjs-saver.min.js",
   "scripts": {
