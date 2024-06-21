@@ -243,6 +243,13 @@ export default grapesjs.plugins.add('gjs-plugin-saver', (editor, opts = {}) => {
             const pageHtmlContent = document.createElement("div");
             pageHtmlContent.innerHTML = document.getElementsByTagName("iframe")[0].contentDocument.body.innerHTML;
 
+            const canvases = document.getElementsByTagName("canvas");
+            for (let i = 0; i < canvases.length; i++) {
+                const canvas = canvases[i];
+                // Perform operations on the canvas element
+                console.log(canvas);
+            }
+
             this.ConvertSVG2Image(pageHtmlContent); // Convert SVG and canvas to Image before appending
             element2pdf.appendChild(pageHtmlContent);
         }
@@ -293,8 +300,8 @@ export default grapesjs.plugins.add('gjs-plugin-saver', (editor, opts = {}) => {
     },
 
     Canvas2PNG(canvas, callback) {
-        const imgData = canvas.toDataURL('image/png');
-        callback(canvas, imgData);
+      const imgData = canvas.toDataURL('image/png');
+      callback(canvas, imgData);
     },
     
     SVG2PNG(svg, svgData, callback) {
